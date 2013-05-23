@@ -147,7 +147,7 @@ module XeroGateway
 
     # Retrieve an employee from Xero
     # Usage get_employee_by_id(employee_id)
-    def get_contact_by_id(employee_id)
+    def get_employee_by_id(employee_id)
       get_employee(employee_id)
     end
 
@@ -183,6 +183,18 @@ module XeroGateway
         employees[index].employee_id = response_employee.employee_id if response_employee && response_employee.employee_id
       end
       response
+    end
+
+    # Retrieves users from Xero
+    # Initial code
+    def get_users(options = {})
+      request_params = {}
+
+      request_params[:EmployeeID]    = options[:employee_id] if options[:employee_id]
+      
+      response_xml = http_get(@client, "#{@xero_url}/Users", request_params)
+
+      parse_response(response_xml, {:request_params => request_params}, {:request_signature => 'GET/users'})
     end
 
     # Retrieves all invoices from Xero
@@ -785,6 +797,7 @@ module XeroGateway
           when "Currencies" then element.children.each {|child| response.response_item << Currency.from_xml(child) }
           when "Organisations" then response.response_item = Organisation.from_xml(element.children.first) # Xero only returns the Authorized Organisation
           when "TrackingCategories" then element.children.each {|child| response.response_item << TrackingCategory.from_xml(child) }
+          when "Users" then element.children.each {|child| response.response_item << User.from_xml(child) }
           when "Errors" then response.errors = element.children.map { |error| Error.parse(error) }
         end
       end if response_element
